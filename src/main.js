@@ -168,19 +168,19 @@ export function update() {
             //@ts-expect-error
             print(`Game over. 1 point.`, 2, 2)
             //@ts-expect-error
-            print(`Press LEFT + DOWN + RIGHT`, 10, 18)
+            print(`Press LEFT + RIGHT`, 10, 18)
             //@ts-expect-error
             print(`to restart.`, 10, 26)
         } else {
             //@ts-expect-error
             print(`Game over. ${points} points.`, 2, 2)
             //@ts-expect-error
-            print(`Press LEFT + DOWN + RIGHT`, 10, 18)
+            print(`Press LEFT + RIGHT`, 10, 18)
             //@ts-expect-error
             print(`to restart.`, 10, 26)
         }
         //@ts-expect-error
-        if (btn.left && btn.right && btn.down) {
+        if (btn.left && btn.right) {
             resetGame();
         }
     } else if (gameState == gameStates.TITLE) {

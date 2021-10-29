@@ -9,7 +9,10 @@ pen(0);
 let t = 0;
 const maxBallNumber = 5;
 const maxBallVelocity = 2;
-const displayWidth = 128;
+const displayWidth = 168;
+const displayHeight = 184;
+const unsafeAreaLeftTopRight = 32;
+const unsafeAreaBottom = 48;
 let points = 0;
 const gameStates = {
     TITLE: "title",
@@ -20,12 +23,12 @@ let gameState = gameStates.TITLE;
 
 class Player {
     constructor() {
-        this.x = 112;
-        this.y = 112;
         this.width = 8;
         this.height = 8;
         this.dx = 1;
         this.dy = 1;
+        this.x = displayWidth - unsafeAreaLeftTopRight - this.width;
+        this.y = displayHeight - unsafeAreaBottom - this.height;
     }
     drawPlayer() {
         //@ts-expect-error
@@ -55,13 +58,13 @@ class Ball {
      * @param {Player} [player]
      */
     constructor(player) {
-        this.safeCoords = getSafeBallSpawnCoordinates(player);
+        this.width = 8;
+        this.height = 8;
+        this.safeCoords = getSafeBallSpawnCoordinates(player, this.width, this.height);
         this.x = this.safeCoords[0];
         this.y = this.safeCoords[1];
         this.dx = Math.random() + 0.01;
         this.dy = Math.random() + 0.01;
-        this.width = 8;
-        this.height = 8;
         this.sprite = 237;
         this.spriteRotation = 0;
         this.spriteDisplayOptions = [0, 0, 0];
@@ -69,6 +72,8 @@ class Ball {
         this.ballRotationSpeed = random(10) + 5
     }
     drawBall() {
+        // //@ts-expect-error
+        // print(`x:${this.x} y:${this.y}`)
         if (t % this.ballRotationSpeed == 0) {
             switch (this.spriteRotation) {
                 case 0:
@@ -95,28 +100,49 @@ class Ball {
 }
 
 /**
+ * Returns a [x, y] pair with coordinates at which a ball
+ * can safely spawn without being too close to the player.
  * @param {Player} player
+ * @param {number} ballWidth
+ * @param {number} ballHeight
+ * @returns {number[]}
  */
-function getSafeBallSpawnCoordinates(player) {
+function getSafeBallSpawnCoordinates(player, ballWidth, ballHeight) {
     if (player.x < displayWidth / 2) {
         if (player.y < displayWidth / 2) {
             // player is in top left quarter
-            return [randomIntFromInterval(displayWidth / 2, displayWidth - 16), randomIntFromInterval(displayWidth / 2, displayWidth - 16)];
+            return [
+                randomIntFromInterval(displayWidth / 2, displayWidth - unsafeAreaLeftTopRight - ballWidth),
+                randomIntFromInterval(displayHeight / 2, displayHeight - unsafeAreaBottom - ballHeight)
+            ];
         } else {
             // player is in bottom left quarter
-            return [randomIntFromInterval(displayWidth / 2, displayWidth - 16), randomIntFromInterval(16, displayWidth / 2)];
+            return [
+                randomIntFromInterval(displayWidth / 2, displayWidth - unsafeAreaLeftTopRight - ballWidth),
+                randomIntFromInterval(unsafeAreaLeftTopRight, displayHeight / 2)
+            ];
         }
     } else {
         if (player.y < displayWidth / 2) {
             // player is in top right quarter
-            return [randomIntFromInterval(8, displayWidth / 2), randomIntFromInterval(displayWidth / 2, displayWidth - 16)];
+            return [
+                randomIntFromInterval(unsafeAreaLeftTopRight, displayWidth / 2),
+                randomIntFromInterval(displayHeight / 2, displayHeight - unsafeAreaBottom - ballHeight)
+            ];
         } else {
             // player is in bottom right quarter
-            return [randomIntFromInterval(8, displayWidth / 2), randomIntFromInterval(16, displayWidth / 2)];
+            return [
+                randomIntFromInterval(unsafeAreaLeftTopRight, displayWidth / 2),
+                randomIntFromInterval(unsafeAreaLeftTopRight, displayHeight / 2),
+            ];
         }
     }
 }
 
+/**
+ * @param {number} min
+ * @param {number} max
+ */
 function randomIntFromInterval(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min)
 }
@@ -154,7 +180,7 @@ export function update() {
 
         // drawing score
         //@ts-expect-error
-        print(`Points:${points}`, 2, 2)
+        print(`Points:${points}`, 2, 176)
         t++;
     } else if (gameState == gameStates.OVER) {
         //@ts-expect-error
@@ -166,18 +192,18 @@ export function update() {
         });
         if (points == 1) {
             //@ts-expect-error
-            print(`Game over. 1 point.`, 2, 2)
+            print(`Game over. 1 point.`, 2, 169)
             //@ts-expect-error
-            print(`Press LEFT + RIGHT`, 10, 18)
-            //@ts-expect-error
-            print(`to restart.`, 10, 26)
+            print(`Press LEFT + RIGHT to restart.`, 2, 177)
+            // //@ts-expect-error
+            // print(`to restart.`, 10, 26)
         } else {
             //@ts-expect-error
-            print(`Game over. ${points} points.`, 2, 2)
+            print(`Game over. ${points} points.`, 2, 169)
             //@ts-expect-error
-            print(`Press LEFT + RIGHT`, 10, 18)
-            //@ts-expect-error
-            print(`to restart.`, 10, 26)
+            print(`Press LEFT + RIGHT to restart.`, 2, 177)
+            // //@ts-expect-error
+            // print(`to restart.`, 2, 184)
         }
         //@ts-expect-error
         if (btn.left && btn.right) {
@@ -188,7 +214,9 @@ export function update() {
         cls();
         map.draw(0, 0)
         //@ts-expect-error
-        print(`Welcome. Press UP to start.`, 2, 2)
+        print(`Welcome to the Steel Ball Run!`, 2, 169)
+        //@ts-expect-error
+        print(`Press UP to start.`, 2, 177)
         //@ts-expect-error
         if (btn.up) {
             gameState = gameStates.RUNNING
@@ -200,13 +228,13 @@ export function update() {
  * @param {Ball} ball
  */
 function updateBall(ball) {
-    if (ball.x <= 8 || ball.x + ball.width >= 120) {
+    if (ball.x <= unsafeAreaLeftTopRight || ball.x + ball.width >= displayWidth - unsafeAreaLeftTopRight) {
         // push ball back to the wall if it clipped in
-        if (ball.x < 8) {
-            ball.x = 9;
+        if (ball.x < unsafeAreaLeftTopRight) {
+            ball.x = unsafeAreaLeftTopRight + 1;
         }
-        if (ball.x + ball.width > 120) {
-            ball.x = 111;
+        if (ball.x + ball.width > displayWidth - unsafeAreaLeftTopRight) {
+            ball.x = displayWidth - unsafeAreaLeftTopRight - ball.width;
         }
         if (Math.abs(ball.dx) < maxBallVelocity) {
             ball.dx *= -1.05;
@@ -216,12 +244,12 @@ function updateBall(ball) {
             points++;
         }
     }
-    if (ball.y <= 16 || ball.y + ball.height >= 120) {
-        if (ball.y < 16) {
-            ball.y = 17;
+    if (ball.y <= unsafeAreaLeftTopRight || ball.y + ball.height >= displayHeight - unsafeAreaBottom) {
+        if (ball.y < unsafeAreaLeftTopRight) {
+            ball.y = unsafeAreaLeftTopRight + 1;
         }
-        if (ball.y + ball.height > 120) {
-            ball.y = 111;
+        if (ball.y + ball.height > displayHeight - unsafeAreaBottom) {
+            ball.y = displayHeight - unsafeAreaBottom - ball.height;
         }
         if (Math.abs(ball.dy) < maxBallVelocity) {
             ball.dy *= -1.05;
@@ -239,25 +267,25 @@ function updateBall(ball) {
 function updatePlayer() {
     //@ts-expect-error
     if (btn.right) {
-        if (player.x + player.width < 120) {
+        if (player.x + player.width < displayWidth - unsafeAreaLeftTopRight) {
             player.x++
         }
     }
     //@ts-expect-error
     if (btn.left) {
-        if (player.x > 8) {
+        if (player.x > unsafeAreaLeftTopRight) {
             player.x--
         }
     }
     //@ts-expect-error
     if (btn.down) {
-        if (player.y + player.height < 120) {
+        if (player.y + player.height < displayHeight - unsafeAreaBottom) {
             player.y++
         }
     }
     //@ts-expect-error
     if (btn.up) {
-        if (player.y > 16) {
+        if (player.y > unsafeAreaLeftTopRight) {
             player.y--
         }
     }
@@ -265,8 +293,8 @@ function updatePlayer() {
 
 function resetGame() {
     balls = [];
-    player.x = 112;
-    player.y = 112;
+    player.x = displayWidth - unsafeAreaLeftTopRight - player.width;
+    player.y = displayHeight - unsafeAreaBottom - player.height;
     points = 0;
     t = 0;
     gameState = gameStates.RUNNING;

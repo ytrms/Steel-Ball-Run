@@ -1,6 +1,6 @@
 {
-	"name": "Halloween Game Jam 2",
-	"version": "1.0.0",
+	"name": "Steel Ball Run",
+	"version": "1.1.0",
 	"description": "made with Pixelbox.js",
 	"dependencies": {
 		"pixelbox": "2.0.2",
